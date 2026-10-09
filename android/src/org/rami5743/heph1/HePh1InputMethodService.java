@@ -1,10 +1,12 @@
 package org.rami5743.heph1;
 
+import android.content.Context;
 import android.inputmethodservice.InputMethodService;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
+import android.view.inputmethod.InputMethodManager;
 
 /** The input method itself: it owns one {@link KeyboardPanel}. */
 public class HePh1InputMethodService extends InputMethodService
@@ -40,6 +42,13 @@ public class HePh1InputMethodService extends InputMethodService
         } else {
             ic.deleteSurroundingText(1, 0);
         }
+    }
+
+    @Override
+    public void onOtherKeyboards() {
+        InputMethodManager imm =
+                (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) imm.showInputMethodPicker();
     }
 
     @Override

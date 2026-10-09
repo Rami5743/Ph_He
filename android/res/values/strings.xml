@@ -8,5 +8,6 @@
     <string name="btn_enable">פתיחת הגדרות המקלדות</string>
     <string name="btn_pick">בחירת המקלדת</string>
     <string name="try_here">כאן אפשר לנסות את המקלדת:</string>
+    <string name="tip_lang">מעבר בין עברית לאנגלית: המקש שליד מקש הספרות, בשורה התחתונה. לחיצה ארוכה עליו פותחת את רשימת המקלדות של הטלפון.</string>
     <string name="intro">פריסה פונטית עברית, זהה לפריסת he_ph1 של ווינדוס: האותיות יושבות במקומות של QWERTY.</string>
 </resources>

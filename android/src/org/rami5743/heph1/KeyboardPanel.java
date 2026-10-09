@@ -23,10 +23,13 @@ final class KeyboardPanel extends LinearLayout {
         void onText(String text);
         void onBackspace();
         void onEnter();
+        /** The language key held down: offer the phone's other keyboards. */
+        void onOtherKeyboards();
     }
 
     private static final int REPEAT_FIRST_MS = 400;
     private static final int REPEAT_MS = 60;
+    private static final int HOLD_MS = 500;
 
     private final Listener listener;
     private final boolean dark;
@@ -35,6 +38,7 @@ final class KeyboardPanel extends LinearLayout {
     private boolean shift;
     private boolean shiftLocked;
     private boolean symbols;
+    private boolean hebrew = true;
 
     KeyboardPanel(Context context, Listener listener) {
         super(context);
@@ -65,7 +69,8 @@ final class KeyboardPanel extends LinearLayout {
 
     private void build() {
         removeAllViews();
-        Layout.Key[][] rows = symbols ? Layout.SYMBOLS : Layout.LETTERS;
+        Layout.Key[][] rows = symbols ? Layout.SYMBOLS
+                : hebrew ? Layout.HEBREW : Layout.ENGLISH;
         for (Layout.Key[] row : rows) {
             LinearLayout line = new LinearLayout(getContext());
             line.setOrientation(HORIZONTAL);
@@ -77,6 +82,23 @@ final class KeyboardPanel extends LinearLayout {
                 line.addView(makeKey(key), new LayoutParams(0,
                         ViewGroup.LayoutParams.MATCH_PARENT, key.weight));
             }
+        }
+    }
+
+    /**
+     * The label of a key, for the three special keys whose text says which
+     * layer the keyboard is on or would move to.
+     */
+    private String labelOf(Layout.Key key) {
+        switch (key.code) {
+            case Layout.Key.LANGUAGE:
+                return hebrew ? "EN" : "עב";
+            case Layout.Key.TO_LETTERS:
+                return hebrew ? "אבג" : "abc";
+            case Layout.Key.SPACE:
+                return hebrew ? "עברית" : "English";
+            default:
+                return key.labelFor(shift || shiftLocked);
         }
     }
 
@@ -95,9 +117,9 @@ final class KeyboardPanel extends LinearLayout {
         view.setIncludeFontPadding(false);
         view.setTextColor(dark ? 0xFFF2F4F8 : 0xFF11151C);
         boolean wide = key.code == Layout.Key.SPACE || key.code == Layout.Key.TO_SYMBOLS
-                || key.code == Layout.Key.TO_LETTERS;
+                || key.code == Layout.Key.TO_LETTERS || key.code == Layout.Key.LANGUAGE;
         view.setTextSize(TypedValue.COMPLEX_UNIT_SP, wide ? 15 : 21);
-        view.setText(key.labelFor(shift || shiftLocked));
+        view.setText(labelOf(key));
 
         final GradientDrawable face = new GradientDrawable();
         face.setCornerRadius(dp(6));
@@ -106,13 +128,23 @@ final class KeyboardPanel extends LinearLayout {
 
         int m = dp(2);
         view.setPadding(m, m, m, m);
-        LinearLayout holder = new LinearLayout(getContext());
-        holder.setPadding(m, m, m, m);
-        holder.addView(view, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+        LinearLayout cell = new LinearLayout(getContext());
+        cell.setPadding(m, m, m, m);
+        cell.addView(view, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
 
         view.setOnTouchListener(new KeyTouch(key, face));
-        return holder;
+        return cell;
+    }
+
+    /** The language key held down: the phone's list of keyboards. */
+    private final class Holder implements Runnable {
+        boolean fired;
+
+        @Override public void run() {
+            fired = true;
+            listener.onOtherKeyboards();
+        }
     }
 
     /** Repeats backspace while the key is held down. */
@@ -128,6 +160,7 @@ final class KeyboardPanel extends LinearLayout {
         private final Layout.Key key;
         private final GradientDrawable face;
         private Repeater repeater;
+        private Holder holder;
 
         KeyTouch(Layout.Key key, GradientDrawable face) {
             this.key = key;
@@ -140,7 +173,14 @@ final class KeyboardPanel extends LinearLayout {
                     face.setColor(pressedColor(key));
                     v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP,
                             HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-                    fire(key);
+                    if (key.code == Layout.Key.LANGUAGE) {
+                        // the press itself only counts on release, so that a
+                        // hold can mean the other thing
+                        holder = new Holder();
+                        handler.postDelayed(holder, HOLD_MS);
+                    } else {
+                        fire(key);
+                    }
                     if (key.code == Layout.Key.BACKSPACE) {
                         repeater = new Repeater();
                         handler.postDelayed(repeater, REPEAT_FIRST_MS);
@@ -151,6 +191,16 @@ final class KeyboardPanel extends LinearLayout {
                     if (repeater != null) {
                         handler.removeCallbacks(repeater);
                         repeater = null;
+                    }
+                    if (holder != null) {
+                        boolean held = holder.fired;
+                        handler.removeCallbacks(holder);
+                        holder = null;
+                        if (!held && event.getActionMasked() == MotionEvent.ACTION_UP) {
+                            face.setColor(faceColor(key));
+                            fire(key);
+                            return true;
+                        }
                     }
                     face.setColor(faceColor(key));
                     return true;
@@ -194,6 +244,13 @@ final class KeyboardPanel extends LinearLayout {
                 symbols = false;
                 build();
                 return;
+            case Layout.Key.LANGUAGE:
+                hebrew = !hebrew;
+                symbols = false;
+                shift = false;
+                shiftLocked = false;
+                build();
+                return;
             default:
                 listener.onText(key.outputFor(shift || shiftLocked));
                 if (shift && !shiftLocked) {
@@ -203,7 +260,11 @@ final class KeyboardPanel extends LinearLayout {
         }
     }
 
-    /** Called when a new text field is opened, so the panel starts clean. */
+    /**
+     * Called when a new text field is opened. The chosen language is kept —
+     * it is the one thing the writer picked on purpose — but the Shift state
+     * and the symbols layer start clean.
+     */
     void reset() {
         if (shift || shiftLocked || symbols) {
             shift = false;

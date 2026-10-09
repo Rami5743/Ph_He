@@ -1,12 +1,15 @@
 package org.rami5743.heph1;
 
 /**
- * The key tables of the Windows layout he_ph1, read out of the KBDTABLES
- * structure of he_ph1.dll (see tools/dump_msklc_dll.py and docs/layout.md).
+ * The key tables of the three layers the keyboard shows.
  *
- * Every letter key carries the character the Windows layout produces
- * unshifted and the character it produces with Shift, in the QWERTY
- * position it occupies there.
+ * The Hebrew layer is the Windows layout he_ph1, read out of the KBDTABLES
+ * structure of he_ph1.dll (see tools/dump_msklc_dll.py and docs/layout.md):
+ * every key carries the character that layout produces unshifted and the one
+ * it produces with Shift, in the QWERTY position it occupies there.
+ *
+ * The English layer is a plain QWERTY, so the same key gives the Hebrew
+ * letter and its Latin counterpart on the two layers.
  */
 final class Layout {
 
@@ -19,6 +22,8 @@ final class Layout {
         static final int TO_SYMBOLS = 4;
         static final int TO_LETTERS = 5;
         static final int SPACE = 6;
+        /** Hebrew <-> English; held down it offers the phone's other keyboards. */
+        static final int LANGUAGE = 7;
 
         final int code;
         final String base;      // label and output in the unshifted state
@@ -69,14 +74,28 @@ final class Layout {
     private static final String SHIFT_LABEL = "⇧";
     private static final String BACKSPACE_LABEL = "⌫";
     private static final String ENTER_LABEL = "↵";
-    private static final String SPACE_LABEL = "עברית";
+
+    /**
+     * The bottom row, shared by the three layers. The labels of the first
+     * three special keys depend on the layer, so KeyboardPanel supplies them;
+     * the ones here are only a fallback.
+     */
+    private static Key[] bottom(int firstCode, String firstLabel,
+                                String commaShifted, String dotShifted) {
+        return row(Key.special(firstCode, firstLabel, 1.5f),
+                   Key.special(Key.LANGUAGE, "EN", 1.5f),
+                   Key.of(",", commaShifted),
+                   Key.special(Key.SPACE, " ", 3.5f),
+                   Key.of(".", dotShifted),
+                   Key.special(Key.ENTER, ENTER_LABEL, 1.5f));
+    }
 
     /**
      * The Hebrew layer. Rows 2-4 are exactly the VK_TO_WCHAR table of
      * he_ph1.dll; the apostrophe key at the end of row 3 is that layout's
      * OEM_7 key, and J carries its two-character ligature gimel+apostrophe.
      */
-    static final Key[][] LETTERS = {
+    static final Key[][] HEBREW = {
         pairs("1\t!", "2\t@", "3\t#", "4\t$", "5\t%",
               "6\t^", "7\t&", "8\t*", "9\t(", "0\t)"),
         pairs("ק\tQ", "ש\tW", "e\tE", "ר\tR", "ת\tט",
@@ -88,11 +107,23 @@ final class Layout {
             Key.of("ו", "V"), Key.of("ב", "B"), Key.of("נ", "ן"),
             Key.of("מ", "ם"),
             Key.special(Key.BACKSPACE, BACKSPACE_LABEL, 1.5f)),
-        row(Key.special(Key.TO_SYMBOLS, "?123", 1.5f),
-            Key.of(",", "<"),
-            Key.special(Key.SPACE, SPACE_LABEL, 4f),
-            Key.of(".", ">"),
-            Key.special(Key.ENTER, ENTER_LABEL, 1.5f)),
+        bottom(Key.TO_SYMBOLS, "?123", "<", ">"),
+    };
+
+    /** A plain QWERTY, on the same keys. */
+    static final Key[][] ENGLISH = {
+        pairs("1\t!", "2\t@", "3\t#", "4\t$", "5\t%",
+              "6\t^", "7\t&", "8\t*", "9\t(", "0\t)"),
+        pairs("q\tQ", "w\tW", "e\tE", "r\tR", "t\tT",
+              "y\tY", "u\tU", "i\tI", "o\tO", "p\tP"),
+        pairs("a\tA", "s\tS", "d\tD", "f\tF", "g\tG",
+              "h\tH", "j\tJ", "k\tK", "l\tL", "'\t\""),
+        row(Key.special(Key.SHIFT, SHIFT_LABEL, 1.5f),
+            Key.of("z", "Z"), Key.of("x", "X"), Key.of("c", "C"),
+            Key.of("v", "V"), Key.of("b", "B"), Key.of("n", "N"),
+            Key.of("m", "M"),
+            Key.special(Key.BACKSPACE, BACKSPACE_LABEL, 1.5f)),
+        bottom(Key.TO_SYMBOLS, "?123", "<", ">"),
     };
 
     /** Digits and punctuation, reached through the ?123 key. */
@@ -107,11 +138,7 @@ final class Layout {
             Key.of("^", "^"), Key.of("&", "&"), Key.of("*", "*"), Key.of("(", "("),
             Key.of(")", ")"),
             Key.special(Key.BACKSPACE, BACKSPACE_LABEL, 1.5f)),
-        row(Key.special(Key.TO_LETTERS, "אבג", 1.5f),
-            Key.of(",", ","),
-            Key.special(Key.SPACE, SPACE_LABEL, 4f),
-            Key.of(".", "."),
-            Key.special(Key.ENTER, ENTER_LABEL, 1.5f)),
+        bottom(Key.TO_LETTERS, "אבג", ",", "."),
     };
 
     private Layout() {}

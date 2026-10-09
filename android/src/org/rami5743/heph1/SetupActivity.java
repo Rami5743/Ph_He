@@ -35,6 +35,7 @@ public class SetupActivity extends Activity {
 
         root.addView(title(getString(R.string.app_name)));
         root.addView(body(getString(R.string.intro)));
+        root.addView(body(getString(R.string.tip_lang)));
 
         root.addView(body(getString(R.string.step1)));
         root.addView(button(getString(R.string.btn_enable), new View.OnClickListener() {

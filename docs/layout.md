@@ -70,6 +70,14 @@ app adds what a soft keyboard needs and the DLL has no place for:
 
 * a `?123` layer with the digits, the punctuation of the Windows layout and
   the shekel sign;
+* an English layer — a plain QWERTY on the same keys, so one key gives the
+  Hebrew letter and its Latin counterpart depending on the layer — and a
+  language key next to `?123` that moves between the two. Held down rather
+  than tapped, that key opens the phone's own list of keyboards, which is
+  the way out to a keyboard this app does not provide;
 * backspace, Enter, space and a Shift key that locks on a second tap;
 * the apostrophe key (the layout's `OEM_7`) is kept at the end of the home
   row, where it is on a physical keyboard.
+
+The chosen language survives moving between text fields; the Shift state and
+the symbols layer do not.
