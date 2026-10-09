@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">מקלדת עברית פונטית</string>
+    <string name="ime_name">עברית פונטית (he_ph1)</string>
+    <string name="subtype_he">עברית פונטית</string>
+    <string name="step1">1. הפעלת המקלדת ברשימת המקלדות</string>
+    <string name="step2">2. בחירת המקלדת ככתיבה פעילה</string>
+    <string name="btn_enable">פתיחת הגדרות המקלדות</string>
+    <string name="btn_pick">בחירת המקלדת</string>
+    <string name="try_here">כאן אפשר לנסות את המקלדת:</string>
+    <string name="intro">פריסה פונטית עברית, זהה לפריסת he_ph1 של ווינדוס: האותיות יושבות במקומות של QWERTY.</string>
+</resources>
